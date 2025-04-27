@@ -2,6 +2,7 @@ from flask import Flask, jsonify, request, render_template
 import requests
 import json
 import os
+from datetime import datetime
 
 app = Flask(__name__)
 
@@ -86,21 +87,22 @@ def list_outfit():
 
 @app.route('/weather', methods=['GET'])
 def get_weather():
-    # city = request.json.get("city")  # Get city name from AJAX request
-    ajax = request.get_json()  # get json data from ajax request
-    city = ajax.get('city')
+    city = request.args.get('city')  # get query data from request
+    # TODO: get also regional specification for more accurate weather forecast
     lat, lon = get_coordinates(city)
 
     if lat and lon:
-        print(f"Latitude: {lat}, Longitude: {lon}")
+        print(f"City: {city}, Latitude: {lat}, Longitude: {lon}")
     else:
         print(f"City {city} not found.")
+
+    current_date = datetime.now().strftime('%Y-%m-%d')
 
     params = {  # define params for openmeteo query
             "latitude": lat,
             "longitude": lon,
-            "start_date": "2025-04-10",
-            "end_date": "2025-04-10",
+            "start_date": current_date,
+            "end_date": current_date,
             "hourly": "temperature_2m,windspeed_10m"
             }
     response = requests.get(BASE_URL, headers=HEADERS, params=params)
