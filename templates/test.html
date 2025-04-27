@@ -1,0 +1,28 @@
+<div class="grid">
+  <div class="box">
+    <img src="https://via.placeholder.com/100" />
+    <p>Image and Text</p>
+  </div>
+  <div class="box">
+    <p>Only Text</p>
+  </div>
+  <div class="box">
+    <img src="https://via.placeholder.com/100" />
+    <p>Another</p>
+  </div>
+  <div class="box">
+    <p>Text Again</p>
+  </div>
+</div>
+
+<style>
+</style>
+
+<script>
+  document.querySelectorAll(".box").forEach(box => {
+    box.addEventListener("click", () => {
+      box.classList.toggle("selected");
+    });
+  });
+</script>
+

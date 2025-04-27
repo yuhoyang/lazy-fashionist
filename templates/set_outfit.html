@@ -1,0 +1,109 @@
+<!DOCTYPE html> 
+<html> 
+	<head> 
+		<title>Set Outfit</title> 
+		<link rel="stylesheet" href="{{ url_for('static', filename='style_retro.css') }}"> 
+	</head>
+	<body>
+		<h1>Set Outfit</h1>
+
+		<form>
+			<div class="wrapper" id="inputContainers">
+				<!-- Dynamic input field -->
+			</div>
+			<button type="button" onclick="addInputContainer()">Add Clothing category</button>
+
+			<div class="wrapper" id="tags">
+				<!-- Dynamic input field -->
+			</div>
+			<button type="button" id="tag-btn">Add Tag for Outfit</button>
+
+			<div style="margin-top: 4vh">
+				<button type="button" id="submit-outfit">Save Outfit</button>
+			</div>
+		</form>
+
+		<script>
+			function addInputContainer() {
+				const container = document.getElementById("inputContainers");
+				const wrapper = document.createElement("div");
+
+				wrapper.innerHTML = `
+					<div class='row'>
+						<div class='column'>
+							<input class="categoryInput" type="text" placeholder="clothing category" required></input>
+						</div>
+						<div class='column'>
+							<input class="valueInput" type="text" placeholder="clothing" required></input>
+						</div>
+						<div class='column'>
+							<button type="button" class="remove-btn" innerText="Remove">Remove</button>
+						</div>
+					</div>
+					`
+
+				wrapper.querySelector(".remove-btn").onclick = () => {
+					wrapper.remove();
+				}
+
+				container.appendChild(wrapper);
+			}
+
+			document.getElementById("tag-btn").addEventListener("click", function() {
+				const container = document.getElementById("tags");
+				const wrapper = document.createElement("div");
+
+				wrapper.innerHTML = `
+					<div class='row'>
+						<div class='column'>
+							<input class="tagInput" type="text" placeholder="tag" required></input>
+						</div>
+						<div class='column'>
+							<button type="button" class="remove-tag-btn" innerText="Remove">Remove</button>
+						</div>
+					</div>
+					`
+
+				wrapper.querySelector(".remove-tag-btn").onclick = () => {
+					wrapper.remove();
+				}
+
+				container.appendChild(wrapper);
+			});
+
+			document.getElementById("submit-outfit").addEventListener("click", function() {
+				const catInput = document.querySelectorAll(".categoryInput");
+				const valInput = document.querySelectorAll(".valueInput");
+				const tagInput = document.querySelectorAll(".tagInput");
+				const data = { id: undefined,tag: [] }; // init data dict with id and tag array
+
+				// save category name and value into array
+				for (let i=0;i<catInput.length;i++) {
+					const key = catInput[i].value;
+					const value = valInput[i].value;
+					data[key] = value;
+				}
+
+				// save tags into array
+				for (let i=0;i<tagInput.length;i++) {
+					const tag = tagInput[i].value;
+					data["tag"].push(tag);
+				}
+
+				console.log(data)
+
+				fetch('/set_outfit', {
+					method: 'PUT',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify(data, false, 4)
+				})
+					.then(res => res.json())
+					.then(data => {
+						console.log("Server response:", data);
+					});
+			})
+		</script>
+	</body>
+</html>
+
+

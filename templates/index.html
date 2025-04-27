@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Hourly Weather</title>
+		<link rel="stylesheet" href="{{ url_for('static', filename='style_retro.css') }}">
+	</head>
+	<body>
+		<h1>Hourly Forecast</h1>
+
+		<a href="{{ url_for('goto_set_outfit') }}">
+			<button>Set an outfit</button>
+		</a>
+
+		<table border="1">
+			<thead>
+				<tr>
+					<th>Time</th>
+					<th>Temperature (°C)</th>
+					<th>Windspeed (km/h)</th>
+				</tr>
+			</thead>
+			<tbody id="weather-table"></tbody>
+		</table>
+
+			<input type="text" id="city-input" placeholder="Enter city">
+			<button type="submit" id="submit-city">Submit</button>
+
+
+		<script>
+			document.getElementById("submit-city").addEventListener("click", function() {
+				const city = document.getElementById("city-input").value;
+
+				fetch('/weather', {
+					method: 'GET',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify({ city: city })
+				})
+					.then(response => response.json())
+					.then(data => { // data = json
+						const tableBody = document.getElementById("weather-table");
+
+						// display values in a table
+						for (let i=0;i<data.time.length;i++) {
+							const time = data.time[i];
+							const temp = data.temperature[i];
+							const windspeed = data.windspeed[i];
+
+							const tempColor = temp > 25 || temp < 5 ? "color: #B22222" : "";
+							const windspeedColor = windspeed > 15 ? "color: #B22222" : "";
+							const row = document.createElement("tr");
+
+							row.innerHTML = `
+								<td>${time}</td>
+								<td style="${tempColor}">${temp}</td>
+								<td style="${windspeedColor}">${windspeed}</td>`;
+							tableBody.appendChild(row);
+						}
+					});
+			});
+		</script>
+	</body>
+</html>
+
