@@ -28,7 +28,6 @@ def goto_manage_outfits():
 @app.route('/set_outfit', methods=['PUT'])
 def set_outfit():
     json_data = request.get_json()
-    # file_data = {}
     print(json_data)
 
     if not json_data:
@@ -36,28 +35,37 @@ def set_outfit():
 
     # check if file exists
     if os.path.exists("outfits.json") and os.stat("outfits.json").st_size > 0:
+        print("outfit.json exists")
         with open("outfits.json", "r+") as f:
             try:
                 file_data = json.load(f)  # will read content and put f pointer to end
+                last_key = get_available_key_num()
+                print(f"available key = {last_key}")
 
-                id = file_data[-1].id + 1
+                json_data = {last_key: json_data}
+                add_tags(json_data)  # record tags in global.json and delete "tags" in json_data
 
-                file_data.append(json_data)
+                file_data.update(json_data)  # add json object to dict
+                print(f"after update of dict: {file_data}")
 
                 f.seek(0)
                 json.dump(file_data, f, indent=4)  # save data into file
                 f.truncate()
             except json.JSONDecodeError:  # if file is corrupt
                 return jsonify({"error": "outfit.json is corrupted"}), 500
-
-#        for key in data.keys():
     else:
+        print("outfit.json will be overwritten")
         with open("outfits.json", "w") as f:
-            json.dump([json_data], f, indent=4)
+            json_data = {0: json_data}  # set 0 as top-key of the received json object
+            print(json_data)
+            add_tags(json_data)  # record tags into global.json
+
+            json.dump(json_data, f, indent=4)
 
     return jsonify({"success": "outfit successfully set!"})
 
 
+# TODO: fix json handling
 @app.route('/delete_outfit', methods=['DELETE'])
 def delete_outfit():
     ajax = request.get_json()
@@ -78,6 +86,7 @@ def delete_outfit():
                 f.write(line)
 
 
+# TODO: update code with json format
 @app.route('/list_outfit', methods=['GET'])
 def list_outfit():
     with open("outfits.txt", "r") as f:
@@ -117,6 +126,50 @@ def get_weather():
                     "windspeed": data["hourly"]["windspeed_10m"],
                     "time": data["hourly"]["time"]
                     })
+
+
+# returns next assignable id number and increases global last key num
+def get_available_key_num():
+    with open("global.json", "r+") as f:
+        data = json.load(f)
+        data["last_key_num"] += 1
+
+        f.seek(0)
+        json.dump(data, f, indent=4)
+        f.truncate()
+
+        return data["last_key_num"]
+
+
+# check if tag already exits if yes, append to map, if no, make new tag entry
+# delete the "tag" key and its value from json_data afterwards
+def add_tags(json_data):
+    top_key = int(list(json_data.keys())[0])  # extract top-level key
+    print(f"top key = {top_key}")
+
+    if os.path.exists("global.json") and os.stat("global.json").st_size > 0:
+        with open("global.json", "r+") as f:
+            global_data = json.load(f)
+
+            for data_key in json_data[top_key]["tags"]:
+                matched_tag = False
+                for global_key in global_data["tags"].keys():
+                    # if tag already exists add current id in mentioned
+                    if global_key == data_key:
+                        global_data["tags"][global_key].append(top_key)
+                        matched_tag = True
+
+                # add new tag to the global file and add current id in mentioned
+                if not matched_tag:
+                    global_data["tags"][data_key] = [top_key]
+
+            f.seek(0)
+            json.dump(global_data, f, indent=4)
+            f.truncate()
+
+            del json_data[top_key]["tags"]
+    else:
+        print("Error: global.json is empty or corrupt")
 
 
 # convert city to longitude and latitude coordinates for openmeteo

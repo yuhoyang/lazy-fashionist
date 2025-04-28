@@ -49,7 +49,7 @@ document.getElementById("submit-outfit").addEventListener("click", function() {
 	const catInput = document.querySelectorAll(".categoryInput");
 	const valInput = document.querySelectorAll(".valueInput");
 	const tagInput = document.querySelectorAll(".tagInput");
-	const data = { id: undefined,tag: [] }; // init data dict with id and tag array
+	const data = { tags: [] }; // init data dict with id and tag array
 
 	// save category name and value into array
 	for (let i=0;i<catInput.length;i++) {
@@ -61,7 +61,7 @@ document.getElementById("submit-outfit").addEventListener("click", function() {
 	// save tags into array
 	for (let i=0;i<tagInput.length;i++) {
 		const tag = tagInput[i].value;
-		data["tag"].push(tag);
+		data["tags"].push(tag);
 	}
 
 	console.log(data)
