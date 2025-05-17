@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>manage pieces</title>
+		<link rel="stylesheet" href="{{ url_for('static', filename='style/manage_pieces.css') }}">
+	</head>
+
+	<body>
+		<h1> Manage Pieces </h1>
+		<form>
+			<div class="row">
+				<div class="column">
+					<div class="wrapper" id="inputContainers">
+						<!-- Dynamic input field -->
+					</div>
+					
+					<div style="flex: 1">
+						<button type="button" onclick="addInputContainer()">Add Clothing category</button>
+						<button type="button" id="submit-pieces" style="margin-top: 10px">Save pieces</button>
+						<div id="error-display" style="margin-top: 25px"></div>
+					</div>
+				</div>
+
+				<div class="column">
+					<table class="scroll-table">
+						<thead>
+							<tr>
+								<th>Type</th>
+								<th>Piece</th>
+							</tr>
+						</thead>
+						<tbody id="pieces-table"></tbody>
+					</table>
+				</div>
+
+			</div>
+		</form>
+
+		<script src="{{ url_for('static', filename='js/manage_pieces.js') }}"></script>
+	</body>
+</html>

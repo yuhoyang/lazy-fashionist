@@ -1,18 +1,59 @@
+function get_pieces() {
+
+	fetch('/get_pieces', {
+		method: 'GET'
+	})
+		.then(response => response.json())
+		.then(data => {
+			tableBody = document.querySelector(".scroll-table");
+
+			piecesTable = document.getElementById("pieces-table");
+			piecesTable.innerHTML = "";
+
+			for (pieceCategory in data) {
+				for (piece in data[pieceCategory]) {
+					const row = document.createElement("tr");
+
+					row.innerHTML = `
+						<td>${pieceCategory}</td>
+						<td>${piece}</td>`;
+					piecesTable.appendChild(row);
+
+					row.addEventListener("click", () => {
+						row.classList.toggle("selected");
+
+						if (row.classList.contains('selected')) {
+							outfitTable = document.querySelector(".outfit-table");
+							outfitTable.appendChild(row);
+							tablebody.scrolltop = tablebody.scrollheight
+						}
+						else {
+							piecesTable.appendChild(row);
+							tableBody.scrolltop = tableBody.scrollheight
+						}
+
+					});
+
+
+				}
+			}
+		})
+}
+get_pieces();
+
 function addInputContainer() {
 	const container = document.getElementById("inputContainers");
 	const wrapper = document.createElement("div");
 
 	wrapper.innerHTML = `
-		<div class='row'>
-			<div class='column'>
-				<input class="categoryInput" type="text" placeholder="clothing category" required></input>
-			</div>
-			<div class='column'>
-				<input class="valueInput" type="text" placeholder="clothing" required></input>
-			</div>
-			<div class='column'>
-				<button type="button" class="remove-btn" innerText="Remove">Remove</button>
-			</div>
+		<div class='column input-column'>
+			<input class="categoryInput" type="text" placeholder="clothing category" required></input>
+		</div>
+		<div class='column input-column'>
+			<input class="valueInput" type="text" placeholder="clothing" required></input>
+		</div>
+		<div class='column remove-column'>
+			<button type="button" class="remove-btn" innerText="Remove">Remove</button>
 		</div>
 		`
 
@@ -22,20 +63,18 @@ function addInputContainer() {
 
 	container.appendChild(wrapper);
 }
-
+/*
 document.getElementById("tag-btn").addEventListener("click", function() {
 	const container = document.getElementById("tags");
 	const wrapper = document.createElement("div");
 
 	wrapper.innerHTML = `
-		<div class='row'>
 			<div class='column'>
 				<input class="tagInput" type="text" placeholder="tag" required></input>
 			</div>
 			<div class='column'>
 				<button type="button" class="remove-tag-btn" innerText="Remove">Remove</button>
 			</div>
-		</div>
 		`
 
 	wrapper.querySelector(".remove-tag-btn").onclick = () => {
@@ -44,7 +83,7 @@ document.getElementById("tag-btn").addEventListener("click", function() {
 
 	container.appendChild(wrapper);
 });
-
+*/
 document.getElementById("submit-outfit").addEventListener("click", function() {
 	const catInput = document.querySelectorAll(".categoryInput");
 	const valInput = document.querySelectorAll(".valueInput");
@@ -66,7 +105,7 @@ document.getElementById("submit-outfit").addEventListener("click", function() {
 
 	console.log(data)
 
-	fetch('/set_outfit', {
+	fetch('/add_outfit', {
 		method: 'PUT',
 		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify(data, false, 4)
@@ -76,3 +115,26 @@ document.getElementById("submit-outfit").addEventListener("click", function() {
 			console.log("Server response:", data);
 		});
 });
+
+fetch('/get_pieces', {
+	method: 'GET'
+})
+.then(response => response.json())
+.then(data => {
+	const tableBody = document.getElementById("pieces-table");
+
+	tableBody.addEventListener("click", (event) => {
+		const table_child = event.target.closest("dynamic-table");
+		if (table_child) {
+			table_child.classList.toggle("selected");
+		}
+	});
+	for (let i=0;i<data.length;i++) {
+		const piece = data[i];
+
+		const row = document.createElement("tr");
+		row.innerHTML = `
+			<td draggable=true class="dynamic-table">${piece}</td>`
+		tableBody.appendChild(row);
+	}
+})

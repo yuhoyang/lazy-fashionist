@@ -2,23 +2,37 @@
 <html> 
 	<head> 
 		<title>Set Outfit</title> 
-		<link rel="stylesheet" href="{{ url_for('static', filename='style_retro.css') }}"> 
+		<link rel="stylesheet" href="{{ url_for('static', filename='style/set_outfit.css') }}"> 
 	</head>
 	<body>
 		<h1>Set Outfit</h1>
 
 		<form>
-			<div class="wrapper" id="inputContainers">
-				<!-- Dynamic input field -->
-			</div>
-			<button type="button" onclick="addInputContainer()">Add Clothing category</button>
+			<div class="row">
+				<div class="column">
+					<table class="scroll-table">
+						<thead>
+							<tr>
+								<th>Type</th>
+								<th>Piece</th>
+							</tr>
+						</thead>
+						<tbody id="pieces-table"></tbody>
+					</table>
+				</div>
 
-			<div class="wrapper" id="tags">
-				<!-- Dynamic input field -->
+				<div class="column">
+					<table class="scroll-table">
+						<thead>
+							<tr>
+								<th>Outfit</th>
+							</tr>
+						</thead>
+						<tbody class="outfit-table" id="outfit-table"></tbody>
+					</table>
+				</div>
 			</div>
-			<button type="button" id="tag-btn">Add Tag for Outfit</button>
-
-			<div style="margin-top: 4vh">
+			<div style="margin-top: 4px">
 				<button type="button" id="submit-outfit">Save Outfit</button>
 			</div>
 		</form>

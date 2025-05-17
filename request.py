@@ -25,8 +25,14 @@ def goto_manage_outfits():
     return render_template("manage_outfits.html")
 
 
-@app.route('/set_outfit', methods=['PUT'])
-def set_outfit():
+@app.route('/goto_manage_pieces')
+def goto_manage_pieces():
+    return render_template("manage_pieces.html")
+
+
+# json data format: "outfits": [pieces], "tags": [tags]
+@app.route('/add_outfit', methods=['PUT'])
+def add_outfit():
     json_data = request.get_json()
     print(json_data)
 
@@ -39,7 +45,7 @@ def set_outfit():
         with open("outfits.json", "r+") as f:
             try:
                 file_data = json.load(f)  # will read content and put f pointer to end
-                last_key = get_available_key_num()
+                last_key = get_available_key_num("global.json")
                 print(f"available key = {last_key}")
 
                 json_data = {last_key: json_data}
@@ -54,7 +60,6 @@ def set_outfit():
             except json.JSONDecodeError:  # if file is corrupt
                 return jsonify({"error": "outfit.json is corrupted"}), 500
     else:
-        print("outfit.json will be overwritten")
         with open("outfits.json", "w") as f:
             json_data = {0: json_data}  # set 0 as top-key of the received json object
             print(json_data)
@@ -63,6 +68,27 @@ def set_outfit():
             json.dump(json_data, f, indent=4)
 
     return jsonify({"success": "outfit successfully set!"})
+
+
+@app.route('/set_outfit', methods=['PUT'])
+def set_outfit():
+    json_data = request.get_json()
+    outfits = {}
+    print(json_data)
+
+    if not json_data:
+        return jsonify({"error": "No outfit data provided"}), 400
+
+    with open("outfits.json", "w") as f:
+        #for j in json_data:
+            #for category in j:
+                #outfits[j] = {category: json_data[j][category]}
+        json.dump(outfits, f, indent=4)
+
+    # TODO: think of a solution for modifying tags
+    # with open("global.json", "w") as f:
+        # for j in json_data:
+            # for 
 
 
 # TODO: fix json handling
@@ -86,12 +112,75 @@ def delete_outfit():
                 f.write(line)
 
 
-# TODO: update code with json format
-@app.route('/list_outfit', methods=['GET'])
+@app.route('/get_outfits', methods=['GET'])
 def list_outfit():
-    with open("outfits.txt", "r") as f:
-        lines = f.read()
-    return lines
+    with open("outfits.json", "r") as f:
+        data = json.load(f)
+    return data
+
+
+@app.route('/get_pieces', methods=['GET'])
+def get_pieces():
+    with open("pieces.json", "r") as f:
+        data = json.load(f)
+    return data
+
+
+# adds new clothing piece
+@app.route('/add_pieces', methods=['PUT'])
+def add_pieces():
+    overlapping_pieces = []
+    new_category = 1
+    pieces = request.get_json()
+
+    with open("pieces.json", "r+") as f:
+        file_data = json.load(f)
+        for new_piece_category in pieces.keys():
+            new_piece = pieces[new_piece_category]
+            # check if there are overlapping pieces
+            if new_piece_category in file_data:
+                # register "we have found an already existing category"
+                new_category = 0
+
+                # case: if multiple elements in one category
+                if type(new_piece) is list:
+                    print(f"list is: {new_piece}")
+                    for p in new_piece:
+                        if p in file_data[new_piece_category]:
+                            print("overlap")
+                            overlapping_pieces.append(p)
+                    if len(overlapping_pieces) != 0:
+                        continue
+                elif new_piece in file_data[new_piece_category]:
+                    print("overlap")
+                    overlapping_pieces.append(new_piece)
+                    continue
+
+            # only write in file, if overlapping_pieces doesn't exist
+            if len(overlapping_pieces) == 0:
+                print("no overlap")
+                # if its a new category, add it as empty dict
+                if new_category:
+                    file_data[new_piece_category] = {}
+
+                # add piece in corresponding category
+                if type(new_piece) is list:
+                    print(f"list is: {new_piece}")
+                    for p in new_piece:
+                        file_data[new_piece_category][p] = {}
+                else:
+                    print("no list")
+                    file_data[new_piece_category][new_piece] = {}
+
+        # if any overlapping pieces exist, send error with overlapping pieces
+        if len(overlapping_pieces) != 0:
+            return jsonify({"error": overlapping_pieces})
+
+        f.seek(0)
+        json.dump(file_data, f, indent=4)
+        f.truncate()
+
+        return jsonify({"success": "pieces added!"})
 
 
 @app.route('/weather', methods=['GET'])
@@ -129,8 +218,8 @@ def get_weather():
 
 
 # returns next assignable id number and increases global last key num
-def get_available_key_num():
-    with open("global.json", "r+") as f:
+def get_available_key_num(file_name):
+    with open(file_name, "r+") as f:
         data = json.load(f)
         data["last_key_num"] += 1
 
@@ -145,12 +234,12 @@ def get_available_key_num():
 # delete the "tag" key and its value from json_data afterwards
 def add_tags(json_data):
     top_key = int(list(json_data.keys())[0])  # extract top-level key
-    print(f"top key = {top_key}")
 
     if os.path.exists("global.json") and os.stat("global.json").st_size > 0:
         with open("global.json", "r+") as f:
             global_data = json.load(f)
 
+            # try to find matching tags and if no matched tags, create new tag category
             for data_key in json_data[top_key]["tags"]:
                 matched_tag = False
                 for global_key in global_data["tags"].keys():
@@ -158,6 +247,7 @@ def add_tags(json_data):
                     if global_key == data_key:
                         global_data["tags"][global_key].append(top_key)
                         matched_tag = True
+                        break
 
                 # add new tag to the global file and add current id in mentioned
                 if not matched_tag:
