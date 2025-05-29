@@ -43,6 +43,7 @@ def add_outfit():
     if os.path.exists("outfits.json") and os.stat("outfits.json").st_size > 0:
         print("outfit.json exists")
         with open("outfits.json", "r+") as f:
+            # add outfit to outfit.json and tags to global.json
             try:
                 file_data = json.load(f)  # will read content and put f pointer to end
                 last_key = get_available_key_num("global.json")
@@ -62,7 +63,6 @@ def add_outfit():
     else:
         with open("outfits.json", "w") as f:
             json_data = {0: json_data}  # set 0 as top-key of the received json object
-            print(json_data)
             add_tags(json_data)  # record tags into global.json
 
             json.dump(json_data, f, indent=4)
@@ -72,57 +72,52 @@ def add_outfit():
 
 @app.route('/set_outfit', methods=['PUT'])
 def set_outfit():
-    json_data = request.get_json()
-    outfits = {}
-    print(json_data)
+    outfits = request.get_json()
 
-    if not json_data:
+    if not outfits:
         return jsonify({"error": "No outfit data provided"}), 400
 
     with open("outfits.json", "w") as f:
-        #for j in json_data:
-            #for category in j:
-                #outfits[j] = {category: json_data[j][category]}
+        # delete tags if there are deleted outfits
+        if len(outfits["deleted_outfits"]) != 0:
+            with open("global.json", "r+") as t:
+                tags = json.load(t)
+                for d in outfits["deleted_outfits"]:
+                    print(d)
+                    for tag in d["__tags__"]:
+                        index = tags[tag].index(d[0])  # find index of outfit id in tags
+                        del tags[tag][index]
+                t.seek(0)
+                json.dump(tags, t, indent=4)
+                t.truncate()
+        del outfits["deleted_outfits"]
+
         json.dump(outfits, f, indent=4)
+
+    return jsonify({"success": "Outfits successfully updated!"}), 200
 
     # TODO: think of a solution for modifying tags
     # with open("global.json", "w") as f:
         # for j in json_data:
             # for 
 
-
-# TODO: fix json handling
-@app.route('/delete_outfit', methods=['DELETE'])
-def delete_outfit():
-    ajax = request.get_json()
-    outfit_to_delete = ajax.get('outfit')
-
-    if outfit_to_delete:
-        print(f"outfit to delete: {outfit_to_delete}")
-    else:
-        print("error getting outfit to delete")
-
-    with open("outfits.json", "r") as f:
-        lines = f.read()
-
-    with open("outfits.json", "w") as f:
-        for line in lines:
-            key = line.strip().split(';', 1)[0]  # strip the string beginning from ';'
-            if key not in outfit_to_delete:  # matching outfit found
-                f.write(line)
-
-
 @app.route('/get_outfits', methods=['GET'])
 def list_outfit():
-    with open("outfits.json", "r") as f:
-        data = json.load(f)
+    if os.path.exists("outfits.json") and os.stat("outfits.json").st_size > 0:
+        with open("outfits.json", "r") as f:
+            data = json.load(f)
+    else:
+        return jsonify({"error": "There are no outfits!"})
     return data
 
 
 @app.route('/get_pieces', methods=['GET'])
 def get_pieces():
-    with open("pieces.json", "r") as f:
-        data = json.load(f)
+    if os.path.exists("pieces.json") and os.stat("pieces.json").st_size > 0:
+        with open("pieces.json", "r") as f:
+            data = json.load(f)
+    else:
+        return jsonify({"error": "There are no pieces!"})
     return data
 
 
@@ -240,7 +235,7 @@ def add_tags(json_data):
             global_data = json.load(f)
 
             # try to find matching tags and if no matched tags, create new tag category
-            for data_key in json_data[top_key]["tags"]:
+            for data_key in json_data[top_key]["__tags__"]:
                 matched_tag = False
                 for global_key in global_data["tags"].keys():
                     # if tag already exists add current id in mentioned
@@ -256,8 +251,6 @@ def add_tags(json_data):
             f.seek(0)
             json.dump(global_data, f, indent=4)
             f.truncate()
-
-            del json_data[top_key]["tags"]
     else:
         print("Error: global.json is empty or corrupt")
 

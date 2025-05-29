@@ -13,18 +13,24 @@ fetch('/get_outfits', {
 })
 	.then(response => response.json())
 	.then(data => {
+		if ("error" in data) {
+			console.warn(data["error"]);
+			return;
+		}
+
 		outfits = data;
+		console.log(data);
 		const gridBody = document.querySelector(".outfit-grid");
-		// TODO: might need to change this, cuz unnecessary div tags maybe
 
 		for (key in data) {
+			delete data[key].__tags__; // to avoid displaying it as a piece
 			const box = document.createElement("div");
 			box.className = "box";
 			box.id = key;
 
 			for (piece in data[key]) {
 				const p = document.createElement("p");
-				p.textContent = piece;
+				p.textContent = data[key][piece];
 				box.appendChild(p);
 			}
 
@@ -34,6 +40,7 @@ fetch('/get_outfits', {
 
 			gridBody.appendChild(box);
 		}
+		outfits["deleted_outfits"] = [];
 	});
 
 // delete all selected boxes with class "box selected"
@@ -42,8 +49,11 @@ document.getElementById("delete-btn").addEventListener("click", function() {
 
 	// save all deleted boxes into array
 	for (let i=0;i<selected_container.length;i++){
-		delete outfits[selected_container[i].id];
-		selected_container[i].remove();
+		outfit = selected_container[i];
+		outfits["deleted_outfits"].push([outfit.id, outfits[outfit.id]]);
+		delete outfits[outfit.id];
+		console.log(outfits["deleted_outfits"]);
+		outfit.remove();
 	}
 });
 
